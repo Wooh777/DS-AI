@@ -2,7 +2,7 @@
 #include "StudentList.h"
 
 int main() {
-    std::cout << "=== Test Case 1: Basic addStudent and printAllStudents ===\n";
+    std::cout << " Test Case 1: Basic addStudent and printAllStudents \n";
     StudentList list1;
 
     double scoresAlice[] = {99.0, 88.0, 92.0};
@@ -15,7 +15,7 @@ int main() {
     list1.addStudent(bob);
     list1.printAllStudents();
 
-    std::cout << "\n=== Test Case 2: removeStudentByID and Resizing ===\n";
+    std::cout << "\n Test Case 2: removeStudentByID and Resizing \n";
     StudentList list2;
 
     double scores1[] = {70.0, 80.0};
@@ -28,30 +28,30 @@ int main() {
 
     list2.addStudent(s1);
     list2.addStudent(s2);
-    list2.addStudent(s3); // Should trigger resize
+    list2.addStudent(s3); 
 
     std::cout << "Before removal:\n";
     list2.printAllStudents();
 
-    bool removed = list2.removeStudentByID(2002); // remove S2
+    bool removed = list2.removeStudentByID(2002); 
     std::cout << "Remove S2 (ID 2002): " << (removed ? "Success" : "Failed") << std::endl;
 
     std::cout << "After removal:\n";
     list2.printAllStudents();
 
-    bool notFound = list2.removeStudentByID(9999); // ID not in list
+    bool notFound = list2.removeStudentByID(9999); 
     std::cout << "Attempt to remove nonexistent ID 9999: " << (notFound ? "Unexpected!" : "Correctly failed") << std::endl;
 
-    std::cout << "\n=== Test Case 3: Deep Copy Check ===\n";
+    std::cout << "\n Test Case 3: Deep Copy Check \n";
     StudentList listA;
     listA.addStudent(alice);
     listA.addStudent(bob);
 
-    StudentList listB(listA); // Copy constructor
+    StudentList listB(listA); 
     StudentList listC;
-    listC = listA; // Assignment operator
+    listC = listA; 
 
-    listA.removeStudentByID(1001); // Remove Alice from listA only
+    listA.removeStudentByID(1001); 
 
     std::cout << "Original list after removal:\n";
     listA.printAllStudents();
@@ -62,7 +62,7 @@ int main() {
     std::cout << "Assigned listC (should include Alice):\n";
     listC.printAllStudents();
 
-    std::cout << "\n=== Test Case 4: Searching by Name or ID ===\n";
+    std::cout << "\n Test Case 4: Searching by Name or ID \n";
     StudentList list4;
     list4.addStudent(alice);
     list4.addStudent(bob);
@@ -79,10 +79,10 @@ int main() {
     Student* result4 = list4.findStudentByID(9999);
     std::cout << "Search by ID (9999): " << (result4 ? "Found" : "Not found") << std::endl;
 
-    std::cout << "\n=== Test Case 5: Varying Number of Scores ===\n";
+    std::cout << "\n Test Case 5: Varying Number of Scores \n";
     double sA[] = {90.0, 85.0};
     double sB[] = {88.0, 77.0, 66.0, 55.0, 44.0};
-    double sC[] = {}; // 0 scores
+    double sC[] = {};
 
     Student stuA("Kim", 3001, sA, 2);
     Student stuB("Lee", 3002, sB, 5);
