@@ -1,0 +1,45 @@
+.calendar-outer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 1.5 * 420px;
+  /* 세로 1.5배, 가로 2.5배 느낌 */
+  padding: 2rem 0;
+}
+
+.custom-calendar {
+  width: 100%;
+  max-width: 900px; /* 2.5배 느낌 */
+  min-width: 350px;
+  min-height: 630px; /* 1.5배 */
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
+  padding: 2.5rem 2rem 2rem 2rem;
+  font-size: 1.25rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.custom-calendar .react-calendar__navigation {
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.custom-calendar .react-calendar__navigation__label {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2563eb;
+}
+
+@media (max-width: 900px) {
+  .custom-calendar {
+    max-width: 100vw;
+    min-width: 0;
+    font-size: 1rem;
+    padding: 1rem;
+  }
+} 
