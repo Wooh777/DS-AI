@@ -1,7 +1,7 @@
 'use client'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
-import { Select, SelectItem } from '@/components/ui/select'
+import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 
 interface JobSelectorProps {
@@ -14,7 +14,7 @@ interface JobSelectorProps {
 }
 
 export default function JobSelector({ onStart }: JobSelectorProps) {
-  const { register, handleSubmit, watch } = useForm()
+  const { register, handleSubmit, watch, setValue } = useForm()
   const onSubmit = (data: any) => {
     const feedback = [
       data.feedback_logic && '논리성',
@@ -33,10 +33,15 @@ export default function JobSelector({ onStart }: JobSelectorProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
         <label className="block font-semibold mb-1">직무 선택</label>
-        <Select {...register('job', { required: true })}>
-          <SelectItem value="developer">개발자</SelectItem>
-          <SelectItem value="designer">디자이너</SelectItem>
-          <SelectItem value="marketer">마케터</SelectItem>
+        <Select onValueChange={(value) => setValue('job', value)}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="직무를 선택하세요" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="developer">개발자</SelectItem>
+            <SelectItem value="designer">디자이너</SelectItem>
+            <SelectItem value="marketer">마케터</SelectItem>
+          </SelectContent>
         </Select>
       </div>
       <div className="flex gap-4">

@@ -7,7 +7,7 @@ export default function Header() {
       <div className="text-2xl font-bold text-blue-700">AI 모의면접</div>
       <nav className="flex gap-8 text-blue-800 font-medium">
         <a href="#about" className="hover:text-blue-600">서비스 소개</a>
-        <a href="#start" className="hover:text-blue-600">시작하기</a>
+        <a href="/job-select" className="hover:text-blue-600">시작하기</a>
       </nav>
       <div className="flex gap-2">
         <Button variant="outline" className="border-blue-600 text-blue-600">로그인</Button>
