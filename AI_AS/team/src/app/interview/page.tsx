@@ -1,110 +1,226 @@
 'use client'
-import { useState } from 'react'
-import QuestionBox from '@/features/interview/components/QuestionBox'
-import VoiceRecorder from '@/features/interview/components/VoiceRecorder'
-import FeedbackPanel from '@/features/interview/components/FeedbackPanel'
-import NavigationButtons from '@/features/interview/components/NavigationButtons'
-import ProgressBar from '@/features/interview/components/ProgressBar'
-import Header from '@/features/job-select/components/Header'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Home } from 'lucide-react'
+import ProgressBar from '../../features/interview/components/ProgressBar'
+import QuestionBox from '../../features/interview/components/QuestionBox'
+import VoiceRecorder from '../../features/interview/components/VoiceRecorder'
+import AnswerTranscript from '../../features/interview/components/AnswerTranscript'
+import FeedbackPanel from '../../features/interview/components/FeedbackPanel'
+import NavigationButtons from '../../features/interview/components/NavigationButtons'
+import { generateQuestions } from '@/lib/api'
+
+// 예시 질문 목록 (실제로는 API나 데이터베이스에서 가져올 수 있습니다)
+const SAMPLE_QUESTIONS = {
+  developer: [
+    "자기소개를 해주세요.",
+    "프로젝트에서 가장 어려웠던 점과 해결 방법은?",
+    "자바스크립트의 클로저에 대해 설명해주세요.",
+    "REST API의 특징은 무엇인가요?",
+    "데이터베이스 인덱스의 장단점은?",
+    "마이크로서비스 아키텍처의 장단점은?",
+    "CI/CD 파이프라인을 구축한 경험이 있다면 설명해주세요.",
+    "코드 리뷰를 할 때 중요하게 생각하는 부분은?",
+    "테스트 자동화에 대해 어떻게 생각하시나요?"
+  ],
+  designer: [
+    "자기소개를 해주세요.",
+    "디자인 프로세스에 대해 설명해주세요.",
+    "가장 자신 있는 디자인 프로젝트는?",
+    "UI/UX의 차이점은 무엇인가요?",
+    "디자인 시스템을 구축한 경험이 있다면 설명해주세요.",
+    "사용자 리서치 방법에 대해 설명해주세요.",
+    "디자인 툴 중 가장 선호하는 것은?",
+    "반응형 디자인의 중요성은?",
+    "디자인 트렌드에 대해 어떻게 생각하시나요?"
+  ],
+  marketer: [
+    "자기소개를 해주세요.",
+    "마케팅 전략을 수립한 경험이 있다면 설명해주세요.",
+    "성공적인 마케팅 캠페인 사례를 설명해주세요.",
+    "디지털 마케팅과 전통적 마케팅의 차이점은?",
+    "타겟 고객층을 분석하는 방법은?",
+    "마케팅 ROI를 측정하는 방법은?",
+    "소셜 미디어 마케팅 전략은?",
+    "브랜드 포지셔닝에 대해 설명해주세요.",
+    "마케팅 자동화 도구 사용 경험이 있다면 설명해주세요."
+  ]
+}
 
 export default function InterviewPage() {
-  const [currentQuestion, setCurrentQuestion] = useState('AI 면접 서비스에 지원한 동기를 말씀해주세요.')
-  const [transcript, setTranscript] = useState('')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const job = searchParams.get('job') || 'developer'
+  const questionCount = parseInt(searchParams.get('questionCount') || '3')
+  const career = searchParams.get('career') || ''
+  const company = searchParams.get('company') || ''
+  const feedback = searchParams.get('feedback')?.split(',') || []
+  
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [questions, setQuestions] = useState<string[]>([])
+  const [answers, setAnswers] = useState<string[]>([])
   const [isRecording, setIsRecording] = useState(false)
-  const [showFeedback, setShowFeedback] = useState(false)
-  const [questionIndex, setQuestionIndex] = useState(0)
-  const totalQuestions = 3 // 예시
+  const [transcript, setTranscript] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Dummy feedback data
-  const dummyFeedback = {
-    totalScore: 4,
-    summary: '전반적으로 잘 답변해주셨습니다. 핵심 키워드를 더 포함하면 좋습니다.',
-    details: [
-      { label: '논리성', score: 4 },
-      { label: '키워드 포함 여부', score: 3 },
-      { label: '말 빠르기', score: 5 },
-    ],
-    improvement: '답변에 지원 직무와 관련된 구체적인 경험을 더 녹여내면 좋습니다.',
-  }
+  // GPT API를 사용하여 질문 생성
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const generatedQuestions = await generateQuestions({
+          job,
+          career,
+          company,
+          count: questionCount
+        })
+        const processedQuestions = generatedQuestions.map((q: { id: number; text: string; type: string }) => q.text)
+        console.log('Generated Questions for State:', processedQuestions)
+        setQuestions(processedQuestions)
+      } catch (error) {
+        console.error('질문 생성 실패:', error)
+        setError('질문을 생성하는 중 오류가 발생했습니다. 다시 시도해주세요.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  const handleStartRecording = () => {
-    setIsRecording(true)
-    setTranscript('') // Start new recording, clear previous transcript
-    // TODO: 음성 녹음 시작 API 호출
-  }
+    fetchQuestions()
+  }, [job, career, company, questionCount])
 
-  const handleStopRecording = () => {
-    setIsRecording(false)
-    // TODO: 음성 녹음 중지 및 STT API 호출
-    // 임시로 바로 피드백 패널 보여주기
-    setShowFeedback(true)
-  }
-
-  const handleTranscript = (text: string) => {
-    setTranscript(text)
-    // TODO: 텍스트를 AI에 전송하여 피드백 요청
-  }
-
-  const handleRetryAnswer = () => {
-    setShowFeedback(false)
-    setTranscript('')
-    // 다시 답변 시작
-  }
-
-  const handleNextQuestion = () => {
-    if (questionIndex < totalQuestions - 1) {
-      setQuestionIndex(questionIndex + 1)
-      setCurrentQuestion('다음 질문입니다...') // Replace with actual next question
+  const handleNext = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1)
       setTranscript('')
-      setShowFeedback(false)
     } else {
-      // TODO: 면접 종료 및 최종 피드백 페이지로 이동
-      alert('면접이 종료되었습니다. 최종 피드백 페이지로 이동합니다.')
-      window.location.href = '/feedback' // Example redirection
+      // 마지막 질문이면 피드백 페이지로 이동
+      const feedbackData = {
+        job,
+        career,
+        company,
+        feedback,
+        questionCount,
+        questions,
+        answers
+      }
+      // URL 파라미터로 데이터 전달
+      const queryString = new URLSearchParams({
+        data: JSON.stringify(feedbackData)
+      }).toString()
+      router.push(`/feedback?${queryString}`)
     }
   }
 
-  const handlePrevQuestion = () => {
-    if (questionIndex > 0) {
-      setQuestionIndex(questionIndex - 1)
-      setCurrentQuestion('이전 질문입니다...') // Replace with actual previous question
+  const handlePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1)
       setTranscript('')
-      setShowFeedback(false)
     }
+  }
+
+  const handleAnswerSubmit = (answer: string) => {
+    const newAnswers = [...answers]
+    newAnswers[currentQuestionIndex] = answer
+    setAnswers(newAnswers)
+    
+    // 마지막 질문이고 답변이 완료되면 피드백 페이지로 이동
+    if (currentQuestionIndex === questions.length - 1) {
+      const feedbackData = {
+        job,
+        career,
+        company,
+        feedback,
+        questionCount,
+        questions,
+        answers: newAnswers
+      }
+      const queryString = new URLSearchParams({
+        data: JSON.stringify(feedbackData)
+      }).toString()
+      router.push(`/feedback?${queryString}`)
+    }
+  }
+
+  const handleGoHome = () => {
+    router.push('/')
+  }
+
+  // 로딩 중이거나 에러가 있으면 표시
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl text-center">
+        <div className="text-xl text-blue-600">AI가 면접 질문을 생성중입니다...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl text-center">
+        <div className="text-xl text-red-600 mb-4">{error}</div>
+        <Button 
+          onClick={handleGoHome}
+          variant="outline"
+          className="flex items-center gap-2 mx-auto"
+        >
+          <Home size={20} />
+          홈으로
+        </Button>
+      </div>
+    )
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
-      <main className="flex-grow flex flex-col items-center p-8">
-        <h1 className="text-3xl font-bold text-blue-800 mb-8">면접 진행</h1>
-        <ProgressBar current={questionIndex + 1} total={totalQuestions} />
-        <div className="w-full max-w-xl bg-white rounded-xl shadow-lg p-6">
-          <QuestionBox question={currentQuestion} />
-          {!showFeedback && (
-            <VoiceRecorder
-              isRecording={isRecording}
-              onStart={handleStartRecording}
-              onStop={handleStopRecording}
-              onTranscript={handleTranscript}
-              transcript={transcript}
-            />
-          )}
-          {showFeedback && (
-            <FeedbackPanel
-              totalScore={dummyFeedback.totalScore}
-              summary={dummyFeedback.summary}
-              details={dummyFeedback.details}
-              improvement={dummyFeedback.improvement}
-              onRetry={handleRetryAnswer}
-              onNext={handleNextQuestion}
-            />
-          )}
-          {!showFeedback && (
-            <NavigationButtons onPrev={handlePrevQuestion} onNext={handleNextQuestion} />
-          )}
-        </div>
-      </main>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-blue-800">면접 진행</h1>
+        <Button 
+          onClick={handleGoHome}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Home size={20} />
+          홈으로
+        </Button>
+      </div>
+
+      <ProgressBar 
+        current={currentQuestionIndex + 1} 
+        total={questions.length} 
+      />
+      
+      <div className="mt-8 space-y-6">
+        <QuestionBox 
+          question={questions[currentQuestionIndex]} 
+          questionNumber={currentQuestionIndex + 1}
+        />
+        
+        <VoiceRecorder 
+          isRecording={isRecording}
+          onRecordingChange={setIsRecording}
+          onTranscriptChange={setTranscript}
+        />
+        
+        <AnswerTranscript 
+          transcript={transcript}
+          onAnswerSubmit={handleAnswerSubmit}
+        />
+        
+        <FeedbackPanel 
+          answer={answers[currentQuestionIndex]}
+          question={questions[currentQuestionIndex]}
+        />
+          
+        <NavigationButtons 
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          isPreviousDisabled={currentQuestionIndex === 0}
+          isNextDisabled={currentQuestionIndex === questions.length - 1}
+        />
+      </div>
     </div>
   )
 } 

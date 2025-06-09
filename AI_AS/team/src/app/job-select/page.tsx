@@ -1,14 +1,27 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import JobSelector from '@/features/job-select/components/JobSelector'
 import Header from '@/features/job-select/components/Header'
 
 export default function JobSelectPage() {
+  const router = useRouter()
+
   const handleStartInterview = (prompt: any) => {
-    // TODO: 인터뷰 시작 로직 (GPT 질문 생성 API 호출 등)
-    console.log('인터뷰 시작 프롬프트:', prompt)
-    // 다음 페이지로 이동 (예: /interview)
-    window.location.href = '/interview'
+    console.log('Prompt object in handleStartInterview:', prompt);
+    console.log('Prompt feedback in handleStartInterview:', prompt.feedback);
+
+    const feedbackParam = prompt.feedback ? prompt.feedback.join(',') : '';
+    // URL 파라미터로 선택한 정보 전달
+    const queryString = new URLSearchParams({
+      job: prompt.job,
+      questionCount: prompt.questionCount.toString(),
+      career: prompt.career,
+      company: prompt.company,
+      feedback: feedbackParam 
+    }).toString()
+    
+    router.push(`/interview?${queryString}`)
   }
 
   return (
