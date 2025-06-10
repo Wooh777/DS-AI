@@ -6,8 +6,8 @@ export default function Footer() {
     <footer className="bg-blue-800 text-white py-8 mt-12">
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 px-4">
         <div>
-          <div className="font-bold text-lg">AI 모의면접</div>
-          <div className="text-sm mt-1">© 2024 AI Interview. All rights reserved.</div>
+          <div className="font-bold text-lg">INTERVIEW.AI</div>
+          <div className="text-sm mt-1">© 2025 AI Interview. All rights reserved.</div>
         </div>
         <div className="flex gap-4 items-center">
           <a href="mailto:contact@aiinterview.com" aria-label="이메일 문의"><Mail /></a>

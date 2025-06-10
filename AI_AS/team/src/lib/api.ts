@@ -19,7 +19,7 @@ export async function generateQuestions({ job, career, company, count }: Generat
         career,
         company,
         questionCount: count,
-        prompt: `${career} ${company}에 지원하는 ${job} 포지션에 대한 면접 질문을 생성해주세요.`,
+        prompt: `${career} ${company}에 지원하는 ${job} 포지션에 대한 면접 질문 ${count}개를 생성해주세요. 번호가 매겨진 목록으로 제공해주세요.`,
       }),
     });
 
@@ -83,7 +83,7 @@ interface AnalyzeInterviewParams {
 }
 
 interface InterviewAnalysis {
-  overallScore: number
+  overallScore: string
   detailedFeedback: {
     question: string
     answer: string
@@ -148,5 +148,84 @@ export async function analyzeInterview({
   } catch (error) {
     console.error('면접 분석 중 오류 발생:', error)
     throw error
+  }
+}
+
+interface PassRateAnalysisParams {
+  allInterviewSessions: {
+    job: string;
+    career: string;
+    company: string;
+    questions: string[];
+    answers: string[];
+  }[];
+  job: string;
+  career: string;
+  company: string;
+}
+
+interface PassRateAnalysisResult {
+  passRateScore: string;
+  analysisSummary: string;
+  keyFactorsForSuccess: string[];
+  areasForImprovement: string[];
+  comparisonToIdeal: string;
+  recommendedResources: string[];
+}
+
+export async function analyzePassRate({
+  allInterviewSessions,
+  job,
+  career,
+  company,
+}: PassRateAnalysisParams): Promise<PassRateAnalysisResult> {
+  try {
+    const response = await fetch('/api/analyze-pass-rate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        allInterviewSessions,
+        job,
+        career,
+        company,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to analyze pass rate');
+    }
+
+    const rawResponseText = await response.text();
+    console.log('Raw Response Text (analyzePassRate Client):', rawResponseText);
+
+    if (!response.ok) {
+      let errorMessage = '합격률 분석에 실패했습니다.';
+      try {
+        const errorData = JSON.parse(rawResponseText);
+        if (errorData && typeof errorData.error === 'string') {
+          errorMessage = errorData.error;
+        } else if (errorData && typeof errorData.message === 'string') {
+          errorMessage = errorData.message;
+        }
+      } catch (e) {
+        console.error('Error parsing error response JSON in analyzePassRate:', e);
+      }
+      throw new Error(errorMessage + (rawResponseText ? `: ${rawResponseText.substring(0, 100)}...` : ''));
+    }
+
+    try {
+      const data = JSON.parse(rawResponseText);
+      console.log('Parsed data structure (analyzePassRate):', data);
+      return data;
+    } catch (e) {
+      console.error('JSON 파싱 중 오류 발생 (analyzePassRate):', e);
+      throw new Error(`API 응답 파싱 중 오류가 발생했습니다: ${rawResponseText.substring(0, 100)}...`);
+    }
+  } catch (error) {
+    console.error('합격률 분석 중 오류:', error);
+    throw error;
   }
 } 

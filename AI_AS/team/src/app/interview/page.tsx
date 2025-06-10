@@ -1,11 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Home } from 'lucide-react'
 import ProgressBar from '../../features/interview/components/ProgressBar'
 import QuestionBox from '../../features/interview/components/QuestionBox'
-import VoiceRecorder from '../../features/interview/components/VoiceRecorder'
 import AnswerTranscript from '../../features/interview/components/AnswerTranscript'
 import FeedbackPanel from '../../features/interview/components/FeedbackPanel'
 import NavigationButtons from '../../features/interview/components/NavigationButtons'
@@ -61,15 +60,21 @@ export default function InterviewPage() {
   const [questions, setQuestions] = useState<string[]>([])
   const [answers, setAnswers] = useState<string[]>([])
   const [isRecording, setIsRecording] = useState(false)
-  const [transcript, setTranscript] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [currentFeedback, setCurrentFeedback] = useState<{ score: number; strengths: string[]; improvements: string[]; } | null>(null)
+  const [showOverallFeedbackButton, setShowOverallFeedbackButton] = useState(false)
+
+  const hasFetchedRef = useRef(false)
 
   // GPT API를 사용하여 질문 생성
   useEffect(() => {
     const fetchQuestions = async () => {
+      if (hasFetchedRef.current) {
+        return
+      }
+
       try {
         setIsLoading(true)
         setError(null)
@@ -82,6 +87,7 @@ export default function InterviewPage() {
         const processedQuestions = generatedQuestions.map((q: { id: number; text: string; type: string }) => q.text)
         console.log('Generated Questions for State:', processedQuestions)
         setQuestions(processedQuestions)
+        hasFetchedRef.current = true
       } catch (error) {
         console.error('질문 생성 실패:', error)
         setError('질문을 생성하는 중 오류가 발생했습니다. 다시 시도해주세요.')
@@ -96,7 +102,6 @@ export default function InterviewPage() {
   const handleNext = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1)
-      setTranscript('')
     } else {
       // 마지막 질문이면 피드백 페이지로 이동
       const feedbackData = {
@@ -108,18 +113,22 @@ export default function InterviewPage() {
         questions,
         answers
       }
-      // URL 파라미터로 데이터 전달
-      const queryString = new URLSearchParams({
-        data: JSON.stringify(feedbackData)
-      }).toString()
-      router.push(`/feedback?${queryString}`)
+      // Session Storage에 현재 세션 데이터 저장
+      sessionStorage.setItem('latestInterviewSessionData', JSON.stringify(feedbackData))
+
+      // Local Storage에 현재 세션 데이터 저장 (전체 통합 피드백용)
+      const existingData = JSON.parse(localStorage.getItem('allInterviewSessionsData') || '[]')
+      const newData = [...existingData, feedbackData]
+      localStorage.setItem('allInterviewSessionsData', JSON.stringify(newData))
+
+      // 마지막 질문이면 전체 피드백 보기 버튼 활성화
+      setShowOverallFeedbackButton(true)
     }
   }
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1)
-      setTranscript('')
     }
   }
 
@@ -154,15 +163,25 @@ export default function InterviewPage() {
         questions,
         answers: newAnswers
       }
-      const queryString = new URLSearchParams({
-        data: JSON.stringify(feedbackData)
-      }).toString()
-      router.push(`/feedback?${queryString}`)
+      // Session Storage에 현재 세션 데이터 저장
+      sessionStorage.setItem('latestInterviewSessionData', JSON.stringify(feedbackData))
+
+      // Local Storage에 현재 세션 데이터 저장 (전체 통합 피드백용)
+      const existingData = JSON.parse(localStorage.getItem('allInterviewSessionsData') || '[]')
+      const newData = [...existingData, feedbackData]
+      localStorage.setItem('allInterviewSessionsData', JSON.stringify(newData))
+
+      // 마지막 질문이면 전체 피드백 보기 버튼 활성화
+      setShowOverallFeedbackButton(true)
     }
   }
 
   const handleGoHome = () => {
     router.push('/')
+  }
+
+  const handleViewOverallFeedback = () => {
+    router.push('/feedback')
   }
 
   // 로딩 중이거나 에러가 있으면 표시
@@ -215,14 +234,8 @@ export default function InterviewPage() {
           questionNumber={currentQuestionIndex + 1}
         />
         
-        <VoiceRecorder 
-          isRecording={isRecording}
-          onRecordingChange={setIsRecording}
-          onTranscriptChange={setTranscript}
-        />
-        
         <AnswerTranscript 
-          transcript={transcript}
+          transcript={answers[currentQuestionIndex] || ''}
           onAnswerSubmit={handleAnswerSubmit}
         />
         
@@ -240,8 +253,19 @@ export default function InterviewPage() {
           onPrevious={handlePrevious}
           onNext={handleNext}
           isPreviousDisabled={currentQuestionIndex === 0}
-          isNextDisabled={currentQuestionIndex === questions.length - 1}
+          isNextDisabled={currentQuestionIndex === questions.length - 1 || showOverallFeedbackButton}
         />
+
+        {showOverallFeedbackButton && (
+          <div className="mt-8 text-center">
+            <Button 
+              onClick={handleViewOverallFeedback}
+              className="text-xl px-8 py-4"
+            >
+              전체 피드백 보기
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )

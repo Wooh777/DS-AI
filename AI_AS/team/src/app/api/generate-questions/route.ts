@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
-        { role: 'system', content: 'You are a helpful assistant that generates interview questions.' },
+        { role: 'system', content: '면접 질문을 한국어로 생성하는 유용한 도우미입니다.' },
         { role: 'user', content: prompt },
       ],
       max_tokens: 1000,
