@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Home } from 'lucide-react'
 import ProgressBar from './ProgressBar'
@@ -9,17 +9,6 @@ import AnswerTranscript from './AnswerTranscript'
 import FeedbackPanel from './FeedbackPanel'
 import NavigationButtons from './NavigationButtons'
 import { generateQuestions, analyzeAnswer } from '@/lib/api'
-import { Suspense } from 'react'
-
-interface InterviewPageContentProps {
-  searchParams: {
-    job?: string;
-    questionCount?: string;
-    career?: string;
-    company?: string;
-    feedback?: string;
-  };
-}
 
 // 예시 질문 목록 (실제로는 API나 데이터베이스에서 가져올 수 있습니다)
 const SAMPLE_QUESTIONS = {
@@ -58,13 +47,14 @@ const SAMPLE_QUESTIONS = {
   ]
 }
 
-export default function InterviewPageContent({ searchParams }: InterviewPageContentProps) {
+export default function InterviewPageContent() {
   const router = useRouter()
-  const job = searchParams.job || 'developer'
-  const questionCount = parseInt(searchParams.questionCount || '3')
-  const career = searchParams.career || '신입'
-  const company = searchParams.company || '가상회사'
-  const feedback = searchParams.feedback?.split(',') || []
+  const urlSearchParams = useSearchParams()
+
+  const job = urlSearchParams.get('job') || 'developer'
+  const career = urlSearchParams.get('career') || '신입'
+  const company = urlSearchParams.get('company') || '가상회사'
+  const feedback = urlSearchParams.get('feedback')?.split(',') || []
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [questions, setQuestions] = useState<string[]>([])
@@ -76,12 +66,15 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
   const [currentFeedback, setCurrentFeedback] = useState<{ score: number; strengths: string[]; improvements: string[]; } | null>(null)
   const [showOverallFeedbackButton, setShowOverallFeedbackButton] = useState(false)
 
-  const hasFetchedRef = useRef(false)
-
-  // GPT API를 사용하여 질문 생성
   useEffect(() => {
     const fetchQuestions = async () => {
-      if (hasFetchedRef.current) {
+      if (questions.length > 0) {
+        return
+      }
+
+      const questionCount = parseInt(urlSearchParams.get('questionCount') || '3')
+
+      if (isNaN(questionCount) || questionCount <= 0) {
         return
       }
 
@@ -92,13 +85,11 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
           job,
           career,
           company,
-          count: questionCount
+          count: questionCount,
+          feedback
         })
-        console.log('Generated questions with params:', { job, career, company, count: questionCount });
         const processedQuestions = generatedQuestions.map((q: { id: number; text: string; type: string }) => q.text)
-        console.log('Generated Questions for State:', processedQuestions)
         setQuestions(processedQuestions)
-        hasFetchedRef.current = true
       } catch (error) {
         console.error('질문 생성 실패:', error)
         setError('질문을 생성하는 중 오류가 발생했습니다. 다시 시도해주세요.')
@@ -108,13 +99,13 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
     }
 
     fetchQuestions()
-  }, [job, career, company, questionCount])
+  }, [job, career, company, feedback])
 
   const handleNext = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1)
     } else {
-      // 마지막 질문이면 피드백 페이지로 이동
+      const questionCount = parseInt(urlSearchParams.get('questionCount') || '3')
       const feedbackData = {
         job,
         career,
@@ -124,15 +115,10 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
         questions,
         answers
       }
-      // Session Storage에 현재 세션 데이터 저장
       sessionStorage.setItem('latestInterviewSessionData', JSON.stringify(feedbackData))
-
-      // Local Storage에 현재 세션 데이터 저장 (전체 통합 피드백용)
       const existingData = JSON.parse(localStorage.getItem('allInterviewSessionsData') || '[]')
       const newData = [...existingData, feedbackData]
       localStorage.setItem('allInterviewSessionsData', JSON.stringify(newData))
-
-      // 마지막 질문이면 전체 피드백 보기 버튼 활성화
       setShowOverallFeedbackButton(true)
     }
   }
@@ -158,8 +144,6 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
         company,
       })
       setCurrentFeedback(response)
-      console.log('API Response for current feedback:', response);
-      console.log('Current Feedback state after update:', currentFeedback); // NOTE: currentFeedback here might be stale due to closure
     } catch (err) {
       console.error('답변 분석 실패:', err)
     } finally {
@@ -167,6 +151,7 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
     }
 
     if (currentQuestionIndex === questions.length - 1) {
+      const questionCount = parseInt(urlSearchParams.get('questionCount') || '3')
       const feedbackData = {
         job,
         career,
@@ -176,15 +161,10 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
         questions,
         answers: newAnswers
       }
-      // Session Storage에 현재 세션 데이터 저장
       sessionStorage.setItem('latestInterviewSessionData', JSON.stringify(feedbackData))
-
-      // Local Storage에 현재 세션 데이터 저장 (전체 통합 피드백용)
       const existingData = JSON.parse(localStorage.getItem('allInterviewSessionsData') || '[]')
       const newData = [...existingData, feedbackData]
       localStorage.setItem('allInterviewSessionsData', JSON.stringify(newData))
-
-      // 마지막 질문이면 전체 피드백 보기 버튼 활성화
       setShowOverallFeedbackButton(true)
     }
   }
@@ -197,7 +177,6 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
     router.push('/feedback')
   }
 
-  // 로딩 중이거나 에러가 있으면 표시
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl text-center">

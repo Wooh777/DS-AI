@@ -19,7 +19,7 @@ const features = [
     icon: <Brain className="text-blue-600" size={32} />,
     title: '합격률 분석',
     description: '답변 데이터를 바탕으로 합격률을 예측해드립니다.',
-    href: '/mypage',
+    href: '/overall-feedback',
   },
 ]
 
