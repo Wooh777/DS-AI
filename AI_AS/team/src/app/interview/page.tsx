@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Home } from 'lucide-react'
 import ProgressBar from '../../features/interview/components/ProgressBar'
@@ -9,6 +9,17 @@ import AnswerTranscript from '../../features/interview/components/AnswerTranscri
 import FeedbackPanel from '../../features/interview/components/FeedbackPanel'
 import NavigationButtons from '../../features/interview/components/NavigationButtons'
 import { generateQuestions, analyzeAnswer } from '@/lib/api'
+import { Suspense } from 'react'
+
+interface InterviewPageProps {
+  searchParams: {
+    job?: string;
+    questionCount?: string;
+    career?: string;
+    company?: string;
+    feedback?: string;
+  };
+}
 
 // 예시 질문 목록 (실제로는 API나 데이터베이스에서 가져올 수 있습니다)
 const SAMPLE_QUESTIONS = {
@@ -47,14 +58,13 @@ const SAMPLE_QUESTIONS = {
   ]
 }
 
-export default function InterviewPage() {
+export default function InterviewPage({ searchParams }: InterviewPageProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const job = searchParams.get('job') || 'developer'
-  const questionCount = parseInt(searchParams.get('questionCount') || '3')
-  const career = searchParams.get('career') || ''
-  const company = searchParams.get('company') || ''
-  const feedback = searchParams.get('feedback')?.split(',') || []
+  const job = searchParams.job || 'developer'
+  const questionCount = parseInt(searchParams.questionCount || '3')
+  const career = searchParams.career || ''
+  const company = searchParams.company || ''
+  const feedback = searchParams.feedback?.split(',') || []
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [questions, setQuestions] = useState<string[]>([])
@@ -210,51 +220,53 @@ export default function InterviewPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-blue-800">면접 진행</h1>
-        <Button 
-          onClick={handleGoHome}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <Home size={20} />
-          홈으로
-        </Button>
-      </div>
+    <Suspense fallback={<div>Loading interview...</div>}>
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-blue-800">면접 진행</h1>
+          <Button 
+            onClick={handleGoHome}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Home size={20} />
+            홈으로
+          </Button>
+        </div>
 
-      <ProgressBar 
-        current={currentQuestionIndex + 1} 
-        total={questions.length} 
-      />
-      
-      <div className="mt-8 space-y-6">
-        <QuestionBox 
-          question={questions[currentQuestionIndex]} 
-          questionNumber={currentQuestionIndex + 1}
+        <ProgressBar 
+          current={currentQuestionIndex + 1} 
+          total={questions.length} 
         />
         
-        <AnswerTranscript 
-          transcript={answers[currentQuestionIndex] || ''}
-          onAnswerSubmit={handleAnswerSubmit}
-        />
-        
-        {feedbackLoading ? (
-          <div className="text-center text-blue-600">AI가 답변을 분석 중입니다...</div>
-        ) : (
-          <FeedbackPanel 
-            answer={answers[currentQuestionIndex]}
-            question={questions[currentQuestionIndex]}
-            feedbackData={currentFeedback}
+        <div className="mt-8 space-y-6">
+          <QuestionBox 
+            question={questions[currentQuestionIndex]} 
+            questionNumber={currentQuestionIndex + 1}
           />
-        )}
           
-        <NavigationButtons 
-          onPrevious={handlePrevious}
-          onNext={handleNext}
-          isPreviousDisabled={currentQuestionIndex === 0}
-          isNextDisabled={currentQuestionIndex === questions.length - 1 || showOverallFeedbackButton}
-        />
+          <AnswerTranscript 
+            transcript={answers[currentQuestionIndex] || ''}
+            onAnswerSubmit={handleAnswerSubmit}
+          />
+          
+          {feedbackLoading ? (
+            <div className="text-center text-blue-600">AI가 답변을 분석 중입니다...</div>
+          ) : (
+            <FeedbackPanel 
+              answer={answers[currentQuestionIndex]}
+              question={questions[currentQuestionIndex]}
+              feedbackData={currentFeedback}            
+            />
+          )}
+
+          <NavigationButtons
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            isPreviousDisabled={currentQuestionIndex === 0}
+            isNextDisabled={currentQuestionIndex === questions.length - 1}
+          />
+        </div>
 
         {showOverallFeedbackButton && (
           <div className="mt-8 text-center">
@@ -267,6 +279,6 @@ export default function InterviewPage() {
           </div>
         )}
       </div>
-    </div>
+    </Suspense>
   )
 } 

@@ -1,5 +1,10 @@
 import FeedbackPage from '@/features/feedback/pages/FeedbackPage'
+import { Suspense } from 'react';
 
 export default function Page() {
-  return <FeedbackPage />
+  return (
+    <Suspense fallback={<div>Loading feedback...</div>}>
+      <FeedbackPage />
+    </Suspense>
+  )
 } 

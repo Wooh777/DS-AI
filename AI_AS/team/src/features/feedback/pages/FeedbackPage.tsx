@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Home } from 'lucide-react'
 import { analyzeInterview } from '@/lib/api'
@@ -15,7 +15,7 @@ interface InterviewData {
 }
 
 interface AnalysisResult {
-  overallScore: number
+  overallScore: string
   detailedFeedback: {
     question: string
     answer: string
@@ -29,7 +29,6 @@ interface AnalysisResult {
 
 export default function FeedbackPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
@@ -114,7 +113,12 @@ export default function FeedbackPage() {
       <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">종합 점수</h2>
-          <div className="text-4xl font-bold text-blue-600">{analysis.overallScore}점</div>
+          <div className="text-4xl font-bold text-blue-600">
+            {analysis.overallScore.split(' - ')[0]}점
+          </div>
+          <p className="text-lg text-gray-700 mt-2">
+            {analysis.overallScore.split(' - ').slice(1).join(' - ')}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
