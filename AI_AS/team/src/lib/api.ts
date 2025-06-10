@@ -1,3 +1,5 @@
+import { FeedbackData } from '@/types/interview'
+
 interface GenerateQuestionsParams {
   job: string
   career: string
@@ -37,7 +39,9 @@ export async function generateQuestions({ job, career, company, count }: Generat
 interface AnalyzeAnswerParams {
   question: string
   answer: string
-  feedback: string[]
+  job: string
+  career: string
+  company: string
 }
 
 interface AnalysisResult {
@@ -47,14 +51,14 @@ interface AnalysisResult {
   improvements: string[]
 }
 
-export async function analyzeAnswer(question: string, answer: string, feedback: string[]) {
+export async function analyzeAnswer({ question, answer, job, career, company }: AnalyzeAnswerParams): Promise<FeedbackData> {
   try {
     const response = await fetch('/api/analyze-answer', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question, answer, feedback }),
+      body: JSON.stringify({ question, answer, job, career, company, model: 'gpt-3.5-turbo' }),
     })
 
     if (!response.ok) {
@@ -63,7 +67,7 @@ export async function analyzeAnswer(question: string, answer: string, feedback: 
     }
 
     const data = await response.json()
-    return data.response
+    return data as FeedbackData
   } catch (error) {
     console.error('Error analyzing answer:', error)
     throw error
@@ -109,7 +113,8 @@ export async function analyzeInterview({
         answers,
         job,
         career,
-        company
+        company,
+        model: 'gpt-3.5-turbo'
       }),
     })
 

@@ -9,7 +9,7 @@ import VoiceRecorder from '../../features/interview/components/VoiceRecorder'
 import AnswerTranscript from '../../features/interview/components/AnswerTranscript'
 import FeedbackPanel from '../../features/interview/components/FeedbackPanel'
 import NavigationButtons from '../../features/interview/components/NavigationButtons'
-import { generateQuestions } from '@/lib/api'
+import { generateQuestions, analyzeAnswer } from '@/lib/api'
 
 // 예시 질문 목록 (실제로는 API나 데이터베이스에서 가져올 수 있습니다)
 const SAMPLE_QUESTIONS = {
@@ -64,6 +64,8 @@ export default function InterviewPage() {
   const [transcript, setTranscript] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [currentFeedback, setCurrentFeedback] = useState<{ score: number; strengths: string[]; improvements: string[]; } | null>(null)
 
   // GPT API를 사용하여 질문 생성
   useEffect(() => {
@@ -121,12 +123,27 @@ export default function InterviewPage() {
     }
   }
 
-  const handleAnswerSubmit = (answer: string) => {
+  const handleAnswerSubmit = async (answer: string) => {
     const newAnswers = [...answers]
     newAnswers[currentQuestionIndex] = answer
     setAnswers(newAnswers)
     
-    // 마지막 질문이고 답변이 완료되면 피드백 페이지로 이동
+    try {
+      setFeedbackLoading(true)
+      const response = await analyzeAnswer({
+        question: questions[currentQuestionIndex],
+        answer: answer,
+        job,
+        career,
+        company,
+      })
+      setCurrentFeedback(response)
+    } catch (err) {
+      console.error('답변 분석 실패:', err)
+    } finally {
+      setFeedbackLoading(false)
+    }
+
     if (currentQuestionIndex === questions.length - 1) {
       const feedbackData = {
         job,
@@ -209,10 +226,15 @@ export default function InterviewPage() {
           onAnswerSubmit={handleAnswerSubmit}
         />
         
-        <FeedbackPanel 
-          answer={answers[currentQuestionIndex]}
-          question={questions[currentQuestionIndex]}
-        />
+        {feedbackLoading ? (
+          <div className="text-center text-blue-600">AI가 답변을 분석 중입니다...</div>
+        ) : (
+          <FeedbackPanel 
+            answer={answers[currentQuestionIndex]}
+            question={questions[currentQuestionIndex]}
+            feedbackData={currentFeedback}
+          />
+        )}
           
         <NavigationButtons 
           onPrevious={handlePrevious}
