@@ -1,4 +1,5 @@
 'use client';
+// Temporary comment to force Vercel rebuild
 
 import Header from '@/features/landing/components/Header'
 import Hero from '@/features/landing/components/Hero'
