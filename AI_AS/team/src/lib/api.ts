@@ -9,6 +9,8 @@ interface GenerateQuestionsParams {
 
 export async function generateQuestions({ job, career, company, count }: GenerateQuestionsParams) {
   try {
+    const prompt = `${career} ${company}에 지원하는 ${job} 포지션에 대한 면접 질문 ${count}개를 생성해주세요. 번호가 매겨진 목록으로 제공해주세요.`;
+
     const response = await fetch('/api/generate-questions', {
       method: 'POST',
       headers: {
@@ -19,7 +21,7 @@ export async function generateQuestions({ job, career, company, count }: Generat
         career,
         company,
         questionCount: count,
-        prompt: `${career} ${company}에 지원하는 ${job} 포지션에 대한 면접 질문 ${count}개를 생성해주세요. 번호가 매겨진 목록으로 제공해주세요.`,
+        prompt,
       }),
     });
 

@@ -62,8 +62,8 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
   const router = useRouter()
   const job = searchParams.job || 'developer'
   const questionCount = parseInt(searchParams.questionCount || '3')
-  const career = searchParams.career || ''
-  const company = searchParams.company || ''
+  const career = searchParams.career || '신입'
+  const company = searchParams.company || '가상회사'
   const feedback = searchParams.feedback?.split(',') || []
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -94,6 +94,7 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
           company,
           count: questionCount
         })
+        console.log('Generated questions with params:', { job, career, company, count: questionCount });
         const processedQuestions = generatedQuestions.map((q: { id: number; text: string; type: string }) => q.text)
         console.log('Generated Questions for State:', processedQuestions)
         setQuestions(processedQuestions)
@@ -157,6 +158,8 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
         company,
       })
       setCurrentFeedback(response)
+      console.log('API Response for current feedback:', response);
+      console.log('Current Feedback state after update:', currentFeedback); // NOTE: currentFeedback here might be stale due to closure
     } catch (err) {
       console.error('답변 분석 실패:', err)
     } finally {
@@ -253,9 +256,11 @@ export default function InterviewPageContent({ searchParams }: InterviewPageCont
         />
 
         <FeedbackPanel 
-          feedback={currentFeedback} 
+          feedbackData={currentFeedback}
           feedbackLoading={feedbackLoading}
           questionNumber={currentQuestionIndex + 1}
+          answer={answers[currentQuestionIndex] || ''}
+          question={questions[currentQuestionIndex] || ''}
         />
 
         <div className="flex justify-between mt-8">

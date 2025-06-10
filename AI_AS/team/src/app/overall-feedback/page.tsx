@@ -157,7 +157,7 @@ export default function OverallFeedbackPage() {
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">종합 점수</h2>
           <div className="text-4xl font-bold text-blue-600">
-            {analysis.overallScore.split(' - ')[0]}점/5점
+            {analysis.overallScore.split(' - ')[0].replace('점', '')}/5점
           </div>
           <p className="text-lg text-gray-700 mt-2">
             {analysis.overallScore.split(' - ').slice(1).join(' - ')}

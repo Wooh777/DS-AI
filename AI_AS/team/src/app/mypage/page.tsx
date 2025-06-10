@@ -189,9 +189,6 @@ export default function MyPage() {
           </ul>
         </div>
       </main>
-      <div className="mt-8 flex justify-center">
-        <SettingsMenu onLogout={handleLogout} />
-      </div>
     </div>
   )
 } 

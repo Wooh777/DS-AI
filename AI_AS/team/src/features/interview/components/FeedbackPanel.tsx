@@ -6,6 +6,8 @@ interface FeedbackPanelProps {
   answer: string
   question: string
   feedbackData: FeedbackData | null // AI 피드백 데이터 추가
+  feedbackLoading: boolean // feedbackLoading prop 추가
+  questionNumber: number // questionNumber prop 추가
 }
 
 export default function FeedbackPanel({ answer, question, feedbackData }: FeedbackPanelProps) {

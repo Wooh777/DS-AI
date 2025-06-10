@@ -1,28 +1,17 @@
-'use client'
-
-import dynamic from 'next/dynamic'
-import { Suspense } from 'react'
+import ClientInterviewPage from './ClientInterviewPage'
 
 interface InterviewPageProps {
-  searchParams: Promise<{
+  searchParams: {
     job?: string;
     questionCount?: string;
     career?: string;
     company?: string;
     feedback?: string;
-  }>;
+  };
 }
 
-const DynamicInterviewPageContent = dynamic(
-  () => import('../../features/interview/components/InterviewPageContent'),
-  { ssr: false }
-)
-
-export default async function InterviewPage({ searchParams }: InterviewPageProps) {
-  const params = await searchParams;
+export default function InterviewPage({ searchParams }: InterviewPageProps) {
   return (
-    <Suspense fallback={<div>Loading interview...</div>}>
-      <DynamicInterviewPageContent searchParams={params} />
-    </Suspense>
+    <ClientInterviewPage searchParams={searchParams} />
   )
 } 
